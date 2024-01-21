@@ -9,4 +9,5 @@ Scrape websites that are available on the surface web while remaining anonymous 
 # SETUP
 
 1. run a mongodb database server
-2. Run this command -> `npm install` 
+2. Run this command -> `npm install` to install node mmodules
+3. Run this command -> `npm start` to run the puppet
