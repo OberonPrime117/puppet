@@ -16,7 +16,7 @@ const pageSchema = new mongoose.Schema({
 
 const Page = mongoose.model('Page', pageSchema);
 
-const MAX_PARALLEL_LINKS = 5;
+const MAX_PARALLEL_LINKS = 10;
 let urls = ['https://example.com'];
 
 async function crawl() {
@@ -25,13 +25,7 @@ async function crawl() {
     args: ["--proxy-server=socks5://127.0.0.1:9050"]
   });  
 
-  const pages = await Promise.all([
-    browser.newPage(),
-    browser.newPage(),
-    browser.newPage(), 
-    browser.newPage(),
-    browser.newPage(),
-  ]);
+  const pages = await Promise.all(Array.from({length: MAX_PARALLEL_LINKS}, () => browser.newPage()));
 
   while(urls.length > 0) {
 
@@ -66,20 +60,34 @@ async function crawlPage(page, currentUrl) {
     return;
   }
 
-  await page.goto(currentUrl, {'timeout': 180000});
+  try {
+    await page.goto(currentUrl, {'timeout': 800000});
+  } catch (error) {
+    console.log(`Caught error ${error} in URL : ${currentUrl} - Skipping and moving on`);
+    return;
+  }
 
   // Extract info  
   const html = await page.content();
   const text = await page.evaluate(() => document.body.innerText);
   const title = await page.title();
 
-  await new Page({ 
-     url: currentUrl,
-     html: html,
-     text: text,
-     title: title
-   }).save();
-
+  try {
+    await new Page({ 
+      url: currentUrl,
+      html: html,
+      text: text,
+      title: title
+    }).save();
+  } catch (error) {
+    if (error.code === 11000) {
+      console.log(`Skipping already saved URL: ${currentUrl}`);
+      return;
+    }
+    else {
+      throw error;
+    }
+  }
    console.log(currentUrl);
 
   const links = await page.evaluate(() => {
