@@ -1,5 +1,7 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
 const mongoose = require('mongoose');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+puppeteer.use(StealthPlugin());
 
 // MongoDB connection
 mongoose.connect('mongodb://localhost:27017/example', {useNewUrlParser: true});
